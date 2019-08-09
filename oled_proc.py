@@ -22,7 +22,8 @@ serial = i2c(port=52, address=0x3C)
 device = ssd1306(serial, rotate=2)
 
 hist_size = 32                 # Horizontal width (in px) of minigraphs
-iface = 'enp1s0'                 # Network interface to monitor
+iface = 'enp1s0'               # Network interface to monitor
+refresh = 1                    # Seconds per refresh
 
 ## Init Data ##
 frame = 0       # Refresh counter
@@ -32,6 +33,9 @@ tx_hist =  [0] * hist_size
 cpu_hist_i = 0
 rx_hist_i = 0
 tx_hist_i = 0
+rx_sample = 0
+tx_sample = 0
+
 #Call and discard first value per docs
 psutil.cpu_percent()
 
@@ -73,6 +77,29 @@ def cpugraph(draw, x, y, height):
     if cpu_hist_i >= hist_size:
         cpu_hist_i = 0
 
+def getrxspeed():
+    global rx_sample
+    new_sample = psutil.net_io_counters().bytes_recv
+    bps = new_sample - rx_sample
+    rx_sample = new_sample
+    return bps
+
+def gettxspeed():
+    global tx_sample
+    new_sample = psutil.net_io_counters().bytes_sent
+    bps = new_sample - tx_sample
+    tx_sample = new_sample
+    return bps
+
+def pretty_speed(bps):
+    if bps < (1 << 20): #kbps
+        return '{speed:.2f} kB/s'.format(speed=float(bps)/(1 << 10))
+    if bps < (1 << 30): #mbps
+        return '{speed:.2f} MB/s'.format(speed=float(bps)/(1 << 20))
+    if bps < (1 << 40): #gbps
+        return '{speed:.2f} GB/s'.format(speed=float(bps)/(1 << 30))
+    return "Error"
+
 ## Draw Stuff ##
 
 # Note: canvas is written to device when WITH block exits
@@ -103,7 +130,13 @@ while True:
         y += draw.textsize(str)[1] + 1
         cpugraph(draw, device.width - hist_size - 3, y - 10, 10)
 
-        # Line 3: Rx/Tx - minigraph
+        # Line 3: Rx - minigraph
+
+        rx = getrxspeed()
+        str = 'Rx: ' + pretty_speed(rx)
+        draw.text((x, y), str, fill="white")
+        y += draw.textsize(str)[1] + 1
+        #rxgraph(draw, device.width - hist_size - 3, y - 10, 10)
 
     time.sleep(1)
     frame+=1
