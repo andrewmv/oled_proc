@@ -11,16 +11,18 @@ import time
 import os
 import psutil
 import ctypes
+import netifaces as ni
 
 ## Init Device ##
 
 # Select i2c/spi and address
-serial = i2c(port=1, address=0x3C)
+serial = i2c(port=52, address=0x3C)
 
 # Select driver chip (SSD130X)
-device = ssd1306(serial)
+device = ssd1306(serial, rotate=2)
 
 hist_size = 32                 # Horizontal width (in px) of minigraphs
+iface = 'enp1s0'                 # Network interface to monitor
 
 ## Init Data ##
 frame = 0       # Refresh counter
@@ -39,7 +41,10 @@ def gethostname():
     return socket.gethostname()
 
 def getip():
-    return socket.gethostbyname(gethostname())
+    if iface is None:
+        return socket.gethostbyname(gethostname())
+    else:
+        return ni.ifaddresses(iface)[ni.AF_INET][0]['addr']
 
 def getloadavg():
     load = os.getloadavg()
@@ -51,9 +56,9 @@ def cpugraph(draw, x, y, height):
     bar_height = (int)((cpu / 100) * height)
     cpu_hist[cpu_hist_i] = bar_height 
     for i in range(cpu_hist_i + 1, hist_size):
-        draw.line([ x + i - cpu_hist_i - 1, \
+        draw.line([ x + i - cpu_hist_i, \
                     y + height, \
-                    x + i - cpu_hist_i - 1, \
+                    x + i - cpu_hist_i, \
                     y + height - cpu_hist[i]], \
                    fill="white", \
                    width=1)
@@ -76,9 +81,9 @@ while True:
     ip = getip()
     with canvas(device) as draw:
     # Bounding Box
-        draw.rectangle(device.bounding_box, outline="white", fill="black")
-        x = 3
-        y = 3
+        #draw.rectangle(device.bounding_box, outline="white", fill="black")
+        x = 0
+        y = 0
 
         # Line 1: Host / IP 
 
@@ -87,7 +92,7 @@ while True:
             if (frame % 2):
                 str = ip
             else:
-                str = host
+                str = hostname
         draw.text((x, y), str, fill="white")
         y += draw.textsize(str)[1] + 1
 
@@ -96,7 +101,7 @@ while True:
         str = getloadavg()
         draw.text((x, y), str, fill="white")
         y += draw.textsize(str)[1] + 1
-        cpugraph(draw, device.width - hist_size - 3, y, 10)
+        cpugraph(draw, device.width - hist_size - 3, y - 10, 10)
 
         # Line 3: Rx/Tx - minigraph
 
