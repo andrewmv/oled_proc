@@ -16,13 +16,13 @@ import netifaces as ni
 ## Init Device ##
 
 # Select i2c/spi and address
-serial = i2c(port=52, address=0x3C)
+serial = i2c(port=1, address=0x3C)
 
 # Select driver chip (SSD130X)
-device = ssd1306(serial, rotate=2)
+device = ssd1306(serial, rotate=2, width=128, height=32)
 
 hist_size = 32                 # Horizontal width (in px) of minigraphs
-iface = 'enp1s0'               # Network interface to monitor
+iface = 'eth0'               # Network interface to monitor
 refresh = 1                    # Seconds per refresh
 wire_speed = (1024 * 1024 * 125) # For scaling bandwidth minigraph
 
@@ -159,21 +159,21 @@ while True:
         y += 10
         cpugraph(draw, device.width - hist_size - 3, y - 10, 10)
 
-        # Line 3: Rx - minigraph
-
-        rx = getrxspeed()
-        str = 'Rx: ' + pretty_speed(rx)
-        draw.text((x, y), str, fill="white")
-        y += 10
-        rxgraph(draw, device.width - hist_size - 3, y - 10, 10, rx)
-
-        # Line 4: Tx - minigraph
-
-        tx = gettxspeed()
-        str = 'Tx: ' + pretty_speed(tx)
-        draw.text((x, y), str, fill="white")
-        y += 10
-        txgraph(draw, device.width - hist_size - 3, y - 10, 10, tx) 
+#        # Line 3: Rx - minigraph
+#
+#        rx = getrxspeed()
+#        str = 'Rx: ' + pretty_speed(rx)
+#        draw.text((x, y), str, fill="white")
+#        y += 10
+#        rxgraph(draw, device.width - hist_size - 3, y - 10, 10, rx)
+#
+#        # Line 4: Tx - minigraph
+#
+#        tx = gettxspeed()
+#        str = 'Tx: ' + pretty_speed(tx)
+#        draw.text((x, y), str, fill="white")
+#        y += 10
+#        txgraph(draw, device.width - hist_size - 3, y - 10, 10, tx) 
 
     time.sleep(refresh)
     frame+=1
