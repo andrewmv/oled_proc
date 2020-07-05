@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Andrew Villeneuve 2019
 # Display system stats on I2C OLED screen
